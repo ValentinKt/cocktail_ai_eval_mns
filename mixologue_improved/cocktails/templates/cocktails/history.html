@@ -1,0 +1,282 @@
+{% extends 'cocktails/base.html' %}
+
+{% block title %}Historique des Cocktails - Le Mixologue Augmenté{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="text-center mb-12 animate-on-scroll">
+    <h1 class="text-4xl md:text-5xl font-bold text-cocktail-dark mb-4">
+        <i class="fas fa-history text-cocktail-primary mr-3"></i>
+        Historique des Cocktails
+    </h1>
+    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+        Retrouvez tous les cocktails créés par notre IA. Redécouvrez vos créations favorites et inspirez-vous pour de nouvelles commandes.
+    </p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8 animate-on-scroll">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <label class="text-sm font-medium text-gray-700">Filtrer par :</label>
+            <select id="filterSelect" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-cocktail-primary focus:border-transparent">
+                <option value="all">Tous les cocktails</option>
+                <option value="favorites">Favoris uniquement</option>
+                <option value="recent">Récents (7 derniers jours)</option>
+            </select>
+        </div>
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-search text-gray-400"></i>
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Rechercher un cocktail..."
+                class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-cocktail-primary focus:border-transparent"
+            >
+        </div>
+    </div>
+</div>
+
+<!-- Cocktails Grid -->
+{% if page_obj.object_list %}
+    <div id="cocktailsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {% for cocktail in page_obj %}
+        <div class="cocktail-card bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-on-scroll" 
+             data-name="{{ cocktail.name|lower }}" 
+             data-favorite="{{ cocktail.is_favorite|yesno:'true,false' }}" 
+             data-date="{{ cocktail.created_at|date:'Y-m-d' }}">
+            
+            <!-- Card Header -->
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-cocktail-dark mb-2">{{ cocktail.name }}</h3>
+                        <p class="text-sm text-gray-500 mb-3">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            {{ cocktail.created_at|date:"d M Y à H:i" }}
+                        </p>
+                    </div>
+                    <button 
+                        class="favorite-btn text-2xl transition-colors {{ cocktail.is_favorite|yesno:'text-red-500,text-gray-300' }} hover:text-red-500"
+                        data-cocktail-id="{{ cocktail.id }}"
+                        data-favorite="{{ cocktail.is_favorite|yesno:'true,false' }}"
+                    >
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Card Content -->
+            <div class="p-6">
+                <p class="text-gray-600 mb-4 line-clamp-3">{{ cocktail.description }}</p>
+                
+                <!-- Ingredients Preview -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-cocktail-dark mb-2 flex items-center">
+                        <i class="fas fa-list-ul mr-2 text-cocktail-secondary"></i>
+                        Ingrédients
+                    </h4>
+                    <div class="text-sm text-gray-600">
+                        {% for ingredient in cocktail.get_ingredients_list|slice:":3" %}
+                            <span class="inline-block bg-gray-100 rounded-full px-2 py-1 mr-1 mb-1">{{ ingredient }}</span>
+                        {% endfor %}
+                        {% if cocktail.get_ingredients_list|length > 3 %}
+                            <span class="text-cocktail-primary">+{{ cocktail.get_ingredients_list|length|add:"-3" }} autres</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Musical Ambiance -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-cocktail-dark mb-1 flex items-center">
+                        <i class="fas fa-music mr-2 text-cocktail-accent"></i>
+                        Ambiance
+                    </h4>
+                    <p class="text-sm text-gray-600">{{ cocktail.musical_ambiance }}</p>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex space-x-2">
+                    <a href="{% url 'cocktails:detail' cocktail.id %}" 
+                       class="flex-1 bg-cocktail-primary text-white text-center py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i>Voir détails
+                    </a>
+                    <button 
+                        class="recreate-btn bg-cocktail-secondary text-white py-2 px-4 rounded-lg hover:bg-cyan-600 transition-colors text-sm font-medium"
+                        data-request="{{ cocktail.user_request }}"
+                    >
+                        <i class="fas fa-redo mr-1"></i>Recréer
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center mt-8">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="px-3 py-2 text-sm text-cocktail-primary hover:bg-cocktail-primary hover:text-white rounded-md transition-colors">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 text-sm text-cocktail-primary hover:bg-cocktail-primary hover:text-white rounded-md transition-colors">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-2 text-sm bg-cocktail-primary text-white rounded-md">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}" class="px-3 py-2 text-sm text-cocktail-primary hover:bg-cocktail-primary hover:text-white rounded-md transition-colors">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 text-sm text-cocktail-primary hover:bg-cocktail-primary hover:text-white rounded-md transition-colors">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-2 text-sm text-cocktail-primary hover:bg-cocktail-primary hover:text-white rounded-md transition-colors">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+    
+{% else %}
+    <!-- Empty State -->
+    <div class="text-center py-16 animate-on-scroll">
+        <i class="fas fa-cocktail text-6xl text-gray-300 mb-6"></i>
+        <h3 class="text-2xl font-bold text-gray-500 mb-4">Aucun cocktail créé pour le moment</h3>
+        <p class="text-gray-400 mb-8">Commencez par créer votre premier cocktail personnalisé !</p>
+        <a href="{% url 'cocktails:index' %}" class="bg-cocktail-primary text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors inline-flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Créer mon premier cocktail
+        </a>
+    </div>
+{% endif %}
+
+<!-- Modal pour recréer un cocktail -->
+<div id="recreateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-cocktail-dark mb-4">Recréer ce cocktail</h3>
+        <p class="text-gray-600 mb-6">Voulez-vous utiliser la même demande pour créer une nouvelle variation de ce cocktail ?</p>
+        <div class="flex space-x-3">
+            <button id="confirmRecreate" class="flex-1 bg-cocktail-primary text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                Oui, recréer
+            </button>
+            <button id="cancelRecreate" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filtrage et recherche
+const filterSelect = document.getElementById('filterSelect');
+const searchInput = document.getElementById('searchInput');
+const cocktailCards = document.querySelectorAll('.cocktail-card');
+
+function filterCocktails() {
+    const filterValue = filterSelect.value;
+    const searchValue = searchInput.value.toLowerCase();
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    cocktailCards.forEach(card => {
+        let show = true;
+        
+        // Filtre par type
+        if (filterValue === 'favorites' && card.dataset.favorite !== 'true') {
+            show = false;
+        } else if (filterValue === 'recent') {
+            const cardDate = new Date(card.dataset.date);
+            if (cardDate < weekAgo) {
+                show = false;
+            }
+        }
+        
+        // Filtre par recherche
+        if (searchValue && !card.dataset.name.includes(searchValue)) {
+            show = false;
+        }
+        
+        card.style.display = show ? 'block' : 'none';
+    });
+}
+
+filterSelect.addEventListener('change', filterCocktails);
+searchInput.addEventListener('input', filterCocktails);
+
+// Gestion des favoris
+document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        const cocktailId = this.dataset.cocktailId;
+        const isFavorite = this.dataset.favorite === 'true';
+        
+        try {
+            const response = await apiRequest(`{% url 'cocktails:api_toggle_favorite' 0 %}`.replace('0', cocktailId), {
+                method: 'POST'
+            });
+            
+            if (response.success) {
+                this.dataset.favorite = response.is_favorite.toString();
+                this.classList.toggle('text-red-500', response.is_favorite);
+                this.classList.toggle('text-gray-300', !response.is_favorite);
+                
+                // Mettre à jour le dataset de la card
+                this.closest('.cocktail-card').dataset.favorite = response.is_favorite.toString();
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Impossible de modifier le statut favori.');
+        }
+    });
+});
+
+// Gestion de la recréation
+let currentRecreateRequest = '';
+const recreateModal = document.getElementById('recreateModal');
+
+document.querySelectorAll('.recreate-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        currentRecreateRequest = this.dataset.request;
+        recreateModal.classList.remove('hidden');
+    });
+});
+
+document.getElementById('confirmRecreate').addEventListener('click', function() {
+    // Rediriger vers la page d'accueil avec la demande pré-remplie
+    const url = new URL('{% url "cocktails:index" %}', window.location.origin);
+    url.searchParams.set('request', currentRecreateRequest);
+    window.location.href = url.toString();
+});
+
+document.getElementById('cancelRecreate').addEventListener('click', function() {
+    recreateModal.classList.add('hidden');
+});
+
+// Fermer le modal en cliquant à l'extérieur
+recreateModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+    }
+});
+
+// Pré-remplir la recherche si elle vient de l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const searchParam = urlParams.get('search');
+if (searchParam) {
+    searchInput.value = searchParam;
+    filterCocktails();
+}
+</script>
+{% endblock %}

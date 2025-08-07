@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Le Mixologue Augmenté{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cocktail-primary': '#8B5CF6',
+                        'cocktail-secondary': '#06B6D4',
+                        'cocktail-accent': '#F59E0B',
+                        'cocktail-dark': '#1F2937',
+                    },
+                    fontFamily: {
+                        'cocktail': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-cyan-50 min-h-screen font-cocktail">
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'cocktails:index' %}" class="flex items-center space-x-2">
+                        <i class="fas fa-cocktail text-cocktail-primary text-2xl"></i>
+                        <span class="text-xl font-bold text-cocktail-dark">Le Mixologue Augmenté</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'cocktails:index' %}" class="text-gray-700 hover:text-cocktail-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-home mr-1"></i> Accueil
+                    </a>
+                    <a href="{% url 'cocktails:history' %}" class="text-gray-700 hover:text-cocktail-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="fas fa-history mr-1"></i> Historique
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-cocktail-dark text-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <p class="text-gray-300">
+                    <i class="fas fa-cocktail mr-2"></i>
+                    Le Mixologue Augmenté - Créé avec ❤️ pour le bar d'Arnaud Dumas à Metz
+                </p>
+                <p class="text-gray-400 text-sm mt-2">
+                    Propulsé par l'IA pour des cocktails uniques et personnalisés
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Fonction utilitaire pour les requêtes AJAX
+        async function apiRequest(url, options = {}) {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            return response.json();
+        }
+
+        // Animation d'apparition des éléments
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.animate-on-scroll');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-4');
+                    }
+                });
+            });
+            
+            elements.forEach(el => {
+                el.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-700');
+                observer.observe(el);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', animateOnScroll);
+    </script>
+    
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

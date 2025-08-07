@@ -1,0 +1,248 @@
+{% extends 'cocktails/base.html' %}
+
+{% block title %}Générateur de Cocktails - Le Mixologue Augmenté{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center mb-12 animate-on-scroll">
+    <h1 class="text-4xl md:text-6xl font-bold text-cocktail-dark mb-4">
+        Créez votre cocktail parfait
+    </h1>
+    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+        Décrivez vos envies et laissez notre IA créer un cocktail unique spécialement pour vous.
+        Que ce soit fruité, épicé, avec ou sans alcool, nous avons la recette parfaite !
+    </p>
+</div>
+
+<!-- Generator Section -->
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 animate-on-scroll">
+        <div class="text-center mb-8">
+            <i class="fas fa-magic text-4xl text-cocktail-primary mb-4"></i>
+            <h2 class="text-2xl font-bold text-cocktail-dark mb-2">Générateur IA</h2>
+            <p class="text-gray-600">Décrivez votre envie et obtenez un cocktail personnalisé</p>
+        </div>
+        
+        <form id="cocktailForm" class="space-y-6">
+            <div>
+                <label for="userRequest" class="block text-sm font-medium text-gray-700 mb-2">
+                    Décrivez votre envie de cocktail
+                </label>
+                <textarea 
+                    id="userRequest" 
+                    name="userRequest" 
+                    rows="4" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cocktail-primary focus:border-transparent resize-none transition-all"
+                    placeholder="Exemple : J'ai envie de quelque chose de fruité mais avec du gin, et pas trop sucré..."
+                    required
+                ></textarea>
+            </div>
+            
+            <div class="flex justify-center">
+                <button 
+                    type="submit" 
+                    id="generateBtn"
+                    class="bg-gradient-to-r from-cocktail-primary to-cocktail-secondary text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+                >
+                    <i class="fas fa-cocktail"></i>
+                    <span>Créer mon cocktail</span>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loadingState" class="hidden text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cocktail-primary mb-4"></div>
+        <p class="text-gray-600">Notre mixologue IA prépare votre cocktail...</p>
+    </div>
+    
+    <!-- Result Section -->
+    <div id="resultSection" class="hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-8 animate-on-scroll">
+            <div class="text-center mb-6">
+                <i class="fas fa-glass-cheers text-4xl text-cocktail-accent mb-4"></i>
+                <h2 class="text-2xl font-bold text-cocktail-dark">Votre cocktail est prêt !</h2>
+            </div>
+            
+            <div id="cocktailResult" class="space-y-6">
+                <!-- Le contenu sera injecté par JavaScript -->
+            </div>
+            
+            <div class="flex justify-center space-x-4 mt-8">
+                <button 
+                    id="newCocktailBtn"
+                    class="bg-cocktail-primary text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                    <i class="fas fa-plus mr-2"></i>Nouveau cocktail
+                </button>
+                <button 
+                    id="saveFavoriteBtn"
+                    class="bg-cocktail-accent text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+                >
+                    <i class="fas fa-heart mr-2"></i>Ajouter aux favoris
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Examples Section -->
+<div class="mt-16 animate-on-scroll">
+    <h3 class="text-2xl font-bold text-center text-cocktail-dark mb-8">Exemples d'inspirations</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer example-card" 
+             data-example="J'ai envie de quelque chose de fruité mais avec du gin, et pas trop sucré">
+            <i class="fas fa-lemon text-2xl text-yellow-500 mb-3"></i>
+            <h4 class="font-semibold text-cocktail-dark mb-2">Fruité & Gin</h4>
+            <p class="text-sm text-gray-600">Quelque chose de fruité avec du gin, pas trop sucré</p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer example-card" 
+             data-example="Un cocktail sans alcool pour une après-midi en terrasse">
+            <i class="fas fa-sun text-2xl text-orange-500 mb-3"></i>
+            <h4 class="font-semibold text-cocktail-dark mb-2">Sans alcool</h4>
+            <p class="text-sm text-gray-600">Pour une après-midi en terrasse</p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer example-card" 
+             data-example="Une création originale à base de whisky et citron vert">
+            <i class="fas fa-glass-whiskey text-2xl text-amber-600 mb-3"></i>
+            <h4 class="font-semibold text-cocktail-dark mb-2">Whisky & Citron</h4>
+            <p class="text-sm text-gray-600">Création originale whisky et citron vert</p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer example-card" 
+             data-example="Je suis de bonne humeur et il fait beau aujourd'hui, tu me conseilles de boire quoi ?">
+            <i class="fas fa-smile text-2xl text-green-500 mb-3"></i>
+            <h4 class="font-semibold text-cocktail-dark mb-2">Bonne humeur</h4>
+            <p class="text-sm text-gray-600">Il fait beau, que me conseilles-tu ?</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentCocktailId = null;
+
+// Gestion du formulaire
+document.getElementById('cocktailForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const userRequest = document.getElementById('userRequest').value.trim();
+    if (!userRequest) return;
+    
+    // Afficher le loading
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('generateBtn').disabled = true;
+    
+    try {
+        const response = await apiRequest('{% url "cocktails:api_generate" %}', {
+            method: 'POST',
+            body: JSON.stringify({ request: userRequest })
+        });
+        
+        if (response.success) {
+            displayCocktail(response.cocktail);
+            currentCocktailId = response.cocktail.id;
+        } else {
+            alert('Erreur: ' + (response.error || 'Impossible de générer le cocktail'));
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la génération du cocktail.');
+    } finally {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('generateBtn').disabled = false;
+    }
+});
+
+// Affichage du cocktail
+function displayCocktail(cocktail) {
+    const resultDiv = document.getElementById('cocktailResult');
+    
+    resultDiv.innerHTML = `
+        <div class="text-center mb-6">
+            <h3 class="text-3xl font-bold text-cocktail-primary mb-2">${cocktail.name}</h3>
+            <p class="text-gray-600">${cocktail.description}</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h4 class="text-lg font-semibold text-cocktail-dark mb-3 flex items-center">
+                    <i class="fas fa-list-ul mr-2 text-cocktail-secondary"></i>
+                    Ingrédients
+                </h4>
+                <ul class="space-y-2">
+                    ${cocktail.ingredients.map(ingredient => 
+                        `<li class="flex items-center text-gray-700">
+                            <i class="fas fa-check text-green-500 mr-2"></i>
+                            ${ingredient}
+                        </li>`
+                    ).join('')}
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-semibold text-cocktail-dark mb-3 flex items-center">
+                    <i class="fas fa-music mr-2 text-cocktail-accent"></i>
+                    Ambiance musicale
+                </h4>
+                <p class="text-gray-700 bg-gray-50 p-3 rounded-lg">${cocktail.musical_ambiance}</p>
+                
+                ${cocktail.image_prompt ? `
+                <h4 class="text-lg font-semibold text-cocktail-dark mb-3 mt-6 flex items-center">
+                    <i class="fas fa-camera mr-2 text-purple-500"></i>
+                    Prompt image
+                </h4>
+                <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg italic">${cocktail.image_prompt}</p>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('resultSection').classList.remove('hidden');
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Gestion des exemples
+document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const example = this.dataset.example;
+        document.getElementById('userRequest').value = example;
+        document.getElementById('userRequest').focus();
+    });
+});
+
+// Nouveau cocktail
+document.getElementById('newCocktailBtn').addEventListener('click', function() {
+    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById('userRequest').value = '';
+    document.getElementById('userRequest').focus();
+    currentCocktailId = null;
+});
+
+// Ajouter aux favoris
+document.getElementById('saveFavoriteBtn').addEventListener('click', async function() {
+    if (!currentCocktailId) return;
+    
+    try {
+        const response = await apiRequest(`/api/cocktail/${currentCocktailId}/favorite/`, {
+            method: 'POST'
+        });
+        
+        if (response.success) {
+            this.innerHTML = '<i class="fas fa-heart mr-2"></i>Ajouté aux favoris !';
+            this.classList.remove('bg-cocktail-accent', 'hover:bg-yellow-600');
+            this.classList.add('bg-green-500', 'hover:bg-green-600');
+            this.disabled = true;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Impossible d\'ajouter aux favoris.');
+    }
+});
+</script>
+{% endblock %}

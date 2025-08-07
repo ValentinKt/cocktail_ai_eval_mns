@@ -1,0 +1,310 @@
+{% extends 'cocktails/base.html' %}
+
+{% block title %}{{ cocktail.name }} - Le Mixologue Augmenté{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div class="mb-6 animate-on-scroll">
+    <a href="{% url 'cocktails:history' %}" class="inline-flex items-center text-cocktail-primary hover:text-purple-700 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Retour à l'historique
+    </a>
+</div>
+
+<!-- Cocktail Header -->
+<div class="bg-gradient-to-r from-cocktail-primary to-cocktail-secondary rounded-2xl text-white p-8 mb-8 animate-on-scroll">
+    <div class="flex items-start justify-between">
+        <div class="flex-1">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ cocktail.name }}</h1>
+            <p class="text-xl opacity-90 mb-4">{{ cocktail.description }}</p>
+            <div class="flex items-center text-sm opacity-75">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Créé le {{ cocktail.created_at|date:"d M Y à H:i" }}
+            </div>
+        </div>
+        <div class="flex flex-col items-center space-y-3">
+            <button 
+                id="favoriteBtn"
+                class="text-3xl transition-transform hover:scale-110 {{ cocktail.is_favorite|yesno:'text-red-300,text-white/50' }}"
+                data-cocktail-id="{{ cocktail.id }}"
+                data-favorite="{{ cocktail.is_favorite|yesno:'true,false' }}"
+            >
+                <i class="fas fa-heart"></i>
+            </button>
+            <span class="text-xs opacity-75">Favori</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="grid lg:grid-cols-3 gap-8">
+    <!-- Left Column - Ingredients & Instructions -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Ingredients -->
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h2 class="text-2xl font-bold text-cocktail-dark mb-6 flex items-center">
+                <i class="fas fa-list-ul mr-3 text-cocktail-secondary"></i>
+                Ingrédients
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                {% for ingredient in cocktail.get_ingredients_list %}
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                    <span class="text-gray-700">{{ ingredient }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Original Request -->
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h2 class="text-2xl font-bold text-cocktail-dark mb-4 flex items-center">
+                <i class="fas fa-comment-dots mr-3 text-cocktail-accent"></i>
+                Demande originale
+            </h2>
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border-l-4 border-cocktail-primary">
+                <p class="text-gray-700 italic">"{{ cocktail.user_request }}"</p>
+            </div>
+        </div>
+        
+        <!-- Image Prompt -->
+        {% if cocktail.image_prompt %}
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h2 class="text-2xl font-bold text-cocktail-dark mb-4 flex items-center">
+                <i class="fas fa-camera mr-3 text-purple-500"></i>
+                Prompt pour image IA
+            </h2>
+            <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <p class="text-gray-700 text-sm leading-relaxed">{{ cocktail.image_prompt }}</p>
+                <div class="mt-4 flex space-x-2">
+                    <button 
+                        onclick="copyToClipboard('{{ cocktail.image_prompt|escapejs }}')"
+                        class="bg-purple-500 text-white px-3 py-1 rounded text-xs hover:bg-purple-600 transition-colors"
+                    >
+                        <i class="fas fa-copy mr-1"></i>Copier
+                    </button>
+                    <span class="text-xs text-gray-500 flex items-center">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Utilisable avec MidJourney ou SDXL
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Right Column - Sidebar -->
+    <div class="space-y-6">
+        <!-- Musical Ambiance -->
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h3 class="text-xl font-bold text-cocktail-dark mb-4 flex items-center">
+                <i class="fas fa-music mr-3 text-cocktail-accent"></i>
+                Ambiance musicale
+            </h3>
+            <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+                <p class="text-gray-700 font-medium">{{ cocktail.musical_ambiance }}</p>
+                <div class="mt-3 flex items-center text-sm text-gray-500">
+                    <i class="fas fa-headphones mr-2"></i>
+                    Parfait pour accompagner votre dégustation
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h3 class="text-xl font-bold text-cocktail-dark mb-4">Actions</h3>
+            <div class="space-y-3">
+                <button 
+                    id="recreateBtn"
+                    class="w-full bg-cocktail-secondary text-white py-3 px-4 rounded-lg hover:bg-cyan-600 transition-colors flex items-center justify-center"
+                >
+                    <i class="fas fa-redo mr-2"></i>
+                    Recréer ce cocktail
+                </button>
+                
+                <button 
+                    onclick="shareRecipe()"
+                    class="w-full bg-cocktail-accent text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center"
+                >
+                    <i class="fas fa-share-alt mr-2"></i>
+                    Partager la recette
+                </button>
+                
+                <button 
+                    onclick="printRecipe()"
+                    class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center"
+                >
+                    <i class="fas fa-print mr-2"></i>
+                    Imprimer
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-xl shadow-lg p-6 animate-on-scroll">
+            <h3 class="text-xl font-bold text-cocktail-dark mb-4">Informations</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Nombre d'ingrédients</span>
+                    <span class="font-semibold text-cocktail-primary">{{ cocktail.get_ingredients_list|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">Statut</span>
+                    <span class="px-2 py-1 rounded-full text-xs {{ cocktail.is_favorite|yesno:'bg-red-100 text-red-800,bg-gray-100 text-gray-800' }}">
+                        {{ cocktail.is_favorite|yesno:'Favori,Standard' }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-600">ID</span>
+                    <span class="font-mono text-sm text-gray-500">#{{ cocktail.id }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation pour recréer -->
+<div id="recreateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-cocktail-dark mb-4">Recréer ce cocktail</h3>
+        <p class="text-gray-600 mb-6">Voulez-vous utiliser la même demande pour créer une nouvelle variation de ce cocktail ?</p>
+        <div class="bg-gray-50 rounded-lg p-3 mb-6">
+            <p class="text-sm text-gray-700 italic">"{{ cocktail.user_request }}"</p>
+        </div>
+        <div class="flex space-x-3">
+            <button id="confirmRecreate" class="flex-1 bg-cocktail-primary text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                Oui, recréer
+            </button>
+            <button id="cancelRecreate" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gestion des favoris
+document.getElementById('favoriteBtn').addEventListener('click', async function() {
+    const cocktailId = this.dataset.cocktailId;
+    const isFavorite = this.dataset.favorite === 'true';
+    
+    try {
+        const response = await apiRequest(`{% url 'cocktails:api_toggle_favorite' cocktail.id %}`, {
+            method: 'POST'
+        });
+        
+        if (response.success) {
+            this.dataset.favorite = response.is_favorite.toString();
+            this.classList.toggle('text-red-300', response.is_favorite);
+            this.classList.toggle('text-white/50', !response.is_favorite);
+            
+            // Mettre à jour le statut dans la sidebar
+            const statusElement = document.querySelector('.space-y-3 .px-2');
+            if (statusElement) {
+                statusElement.textContent = response.is_favorite ? 'Favori' : 'Standard';
+                statusElement.className = response.is_favorite ? 
+                    'px-2 py-1 rounded-full text-xs bg-red-100 text-red-800' : 
+                    'px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800';
+            }
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Impossible de modifier le statut favori.');
+    }
+});
+
+// Gestion de la recréation
+const recreateModal = document.getElementById('recreateModal');
+
+document.getElementById('recreateBtn').addEventListener('click', function() {
+    recreateModal.classList.remove('hidden');
+});
+
+document.getElementById('confirmRecreate').addEventListener('click', function() {
+    const url = new URL('{% url "cocktails:index" %}', window.location.origin);
+    url.searchParams.set('request', '{{ cocktail.user_request|escapejs }}');
+    window.location.href = url.toString();
+});
+
+document.getElementById('cancelRecreate').addEventListener('click', function() {
+    recreateModal.classList.add('hidden');
+});
+
+// Fermer le modal en cliquant à l'extérieur
+recreateModal.addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+    }
+});
+
+// Fonction pour copier le prompt image
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Feedback visuel
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copié !';
+        btn.classList.add('bg-green-500');
+        btn.classList.remove('bg-purple-500');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('bg-green-500');
+            btn.classList.add('bg-purple-500');
+        }, 2000);
+    }).catch(function(err) {
+        alert('Impossible de copier le texte');
+    });
+}
+
+// Fonction pour partager la recette
+function shareRecipe() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ cocktail.name }}',
+            text: '{{ cocktail.description }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copier l'URL
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            alert('Lien copié dans le presse-papiers !');
+        });
+    }
+}
+
+// Fonction pour imprimer la recette
+function printRecipe() {
+    window.print();
+}
+
+// Pré-remplir si on vient avec une demande dans l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const requestParam = urlParams.get('request');
+if (requestParam) {
+    // Rediriger vers la page d'accueil avec la demande
+    const url = new URL('{% url "cocktails:index" %}', window.location.origin);
+    url.searchParams.set('request', requestParam);
+    window.location.href = url.toString();
+}
+</script>
+
+<style>
+@media print {
+    nav, footer, .space-y-6, #recreateModal {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .bg-gradient-to-r {
+        background: #8B5CF6 !important;
+        -webkit-print-color-adjust: exact;
+    }
+}
+</style>
+{% endblock %}
