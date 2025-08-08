@@ -1,5 +1,5 @@
 // Imports des dépendances React et des types
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Cocktail } from '../types';
 import { cocktailApi } from '../services/api';
 

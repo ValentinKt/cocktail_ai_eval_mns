@@ -1,6 +1,6 @@
 // Configuration et services API pour l'application Mixologue
 import axios from 'axios';
-import type { Cocktail, CocktailRequest, CocktailResponse } from '../types';
+import type { Cocktail, CocktailRequest } from '../types';
 
 /**
  * Interface standardisée pour les réponses API

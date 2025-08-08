@@ -1,52 +1,53 @@
 version: '3.8'
 
 services:
+  # Base de données PostgreSQL
   db:
-    image: postgres:15
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
+    image: postgres:15-alpine
+    container_name: mixologue_db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: mixologue
-      POSTGRES_USER: mixologue_user
-      POSTGRES_PASSWORD: mixologue_password
+      - POSTGRES_DB=${POSTGRES_DB:-mixologue}
+      - POSTGRES_USER=${POSTGRES_USER:-mixologue_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mixologue123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mixologue_user -d mixologue"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: mixologue_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Application Django
   web:
     build: .
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             gunicorn --bind 0.0.0.0:8000 mixologue_improved.wsgi:application"
+    container_name: mixologue_web
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
-    ports:
-      - "8000:8000"
+      - media_volume:/app/mediafiles
     environment:
-      - DEBUG=False
-      - DATABASE_URL=postgresql://mixologue_user:mixologue_password@db:5432/mixologue
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-change-me-in-production}
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-mixologue_user}:${POSTGRES_PASSWORD:-mixologue123}@db:5432/${POSTGRES_DB:-mixologue}
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      db:
-        condition: service_healthy
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_volume:/app/staticfiles
-    depends_on:
-      - web
+      - db
+      - redis
+    command: python manage.py runserver 0.0.0.0:8001
 
 volumes:
   postgres_data:
+  redis_data:
   static_volume:
+  media_volume:

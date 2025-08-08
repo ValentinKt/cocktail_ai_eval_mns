@@ -2,7 +2,6 @@
 import { useState, type FC } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik'; // Gestion des formulaires
 import * as Yup from 'yup'; // Validation des données
-import { cocktailApi } from '../services/api';
 import type { Cocktail } from '../types';
 import CocktailCard from '../components/CocktailCard';
 
@@ -30,14 +29,14 @@ export const CocktailGenerator: FC = () => {
    * @param values - Les valeurs du formulaire (description du cocktail souhaité)
    * @param resetForm - Fonction pour réinitialiser le formulaire
    */
-  const handleSubmit = async (values: { user_request: string }, { resetForm }: any) => {
+  const handleSubmit = async (values: { user_request: string }) => {
     // Activation du loader et réinitialisation des erreurs
     setIsLoading(true);
     setError(null);
     
     try {
       // Appel à l'API Django pour générer le cocktail avec fonctionnalités média
-      const response = await fetch('http://localhost:8001/api/generate-cocktail-with-media/', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-cocktail-with-media/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +157,7 @@ export const CocktailGenerator: FC = () => {
               validationSchema={validationSchema}
               onSubmit={handleSubmit}
             >
-              {({ setFieldValue, values }) => (
+              {({ values }) => (
                 <Form className="space-y-6">
                   <div className="relative">
                     <label htmlFor="user_request" className="block text-lg font-semibold text-theme mb-3">
